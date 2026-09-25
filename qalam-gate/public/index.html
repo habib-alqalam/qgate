@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Qalam Gate</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --ink: #10243b;
+    --muted: #5b6b7d;
+    --line: #dde3ea;
+    --green: #0f7b4f;
+    --amber: #a86a00;
+    --red: #b3261e;
+    --brand: #0b3d2c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--brand);
+    color: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: .3px; }
+  header .sub { font-size: 12px; opacity: .85; }
+  #langToggle {
+    background: #fff;
+    color: var(--brand);
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .banner {
+    background: #fff5d6;
+    border-bottom: 1px solid #ecd9a0;
+    color: #7a5a00;
+    font-size: 13px;
+    padding: 8px 16px;
+    text-align: center;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin: 0 0 12px; }
+  .samples { display: flex; flex-wrap: wrap; gap: 10px; }
+  .samples button {
+    flex: 1 1 200px;
+    background: #eef3f8;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .samples button.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .docs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .docs { grid-template-columns: 1fr; } }
+  .doc { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fbfcfd; }
+  .doc h3 { margin: 0 0 8px; font-size: 14px; color: var(--brand); }
+  .field { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 5px 0; border-bottom: 1px dashed #e8edf2; }
+  .field:last-child { border-bottom: 0; }
+  .field .k { color: var(--muted); }
+  .field .v { font-weight: 600; text-align: end; }
+  .rule { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f5; font-size: 14px; }
+  .rule:last-child { border-bottom: 0; }
+  .badge { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; color: #fff; }
+  .badge.pass { background: var(--green); }
+  .badge.warn { background: var(--amber); }
+  .badge.fail { background: var(--red); }
+  .blocked {
+    background: var(--red);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    text-align: center;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .cleared {
+    background: #e7f4ed;
+    color: var(--green);
+    border: 1px solid #b7e0c9;
+    font-weight: 700;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font: inherit;
+    margin-bottom: 10px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { border: 0; border-radius: 8px; padding: 11px 18px; font-weight: 700; cursor: pointer; font-size: 15px; }
+  .btn.approve { background: var(--green); color: #fff; }
+  .btn.reject { background: var(--red); color: #fff; }
+  .btn.ghost { background: #eef3f8; color: var(--ink); border: 1px solid var(--line); }
+  .btn[disabled] { opacity: .5; cursor: not-allowed; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .msg { margin-top: 10px; font-size: 14px; font-weight: 600; }
+  .msg.err { color: var(--red); }
+  .msg.ok { color: var(--green); }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #eef1f5; font-size: 14px; flex-wrap: wrap; }
+  .timeline li:last-child { border-bottom: 0; }
+  .timeline .seq { font-weight: 800; color: var(--brand); }
+  .timeline .hash { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: var(--muted); }
+  .hidden { display: none; }
+  [dir="rtl"] .v { text-align: start; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Qalam Gate</h1>
+    <div class="sub" id="appSub">Trust layer for UAE government documents</div>
+  </div>
+  <button id="langToggle" type="button">ع</button>
+</header>
+<div class="banner" id="banner">Synthetic data · illustrative rules</div>
+
+<main>
+  <section class="card">
+    <h2 id="samplesTitle">Sample cases</h2>
+    <div class="samples">
+      <button type="button" data-sample="valid" id="btnValid">Valid case</button>
+      <button type="button" data-sample="expired-passport" id="btnExpired">Expired passport</button>
+      <button type="button" data-sample="name-mismatch" id="btnMismatch">Name mismatch</button>
+    </div>
+  </section>
+
+  <div id="caseView" class="hidden">
+    <div id="verdict"></div>
+
+    <section class="card">
+      <h2 id="docsTitle">Documents</h2>
+      <div class="docs">
+        <div class="doc"><h3 id="passportTitle">Passport</h3><div id="passportFields"></div></div>
+        <div class="doc"><h3 id="eidTitle">Emirates ID</h3><div id="eidFields"></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="rulesTitle">Rule checks</h2>
+      <div id="rules"></div>
+    </section>
+
+    <section class="card">
+      <h2 id="gateTitle">Human gate</h2>
+      <label for="reviewer" id="reviewerLabel">Reviewer name</label>
+      <input id="reviewer" type="text" autocomplete="name" />
+      <label for="reason" id="reasonLabel">Reason / notes</label>
+      <textarea id="reason" rows="3"></textarea>
+      <div class="actions">
+        <button type="button" class="btn approve" id="approveBtn">Approve</button>
+        <button type="button" class="btn reject" id="rejectBtn">Reject</button>
+      </div>
+      <div class="note" id="gateNote">No auto-approve. Human sign-off required.</div>
+      <div class="msg" id="decisionMsg"></div>
+    </section>
+
+    <section class="card">
+      <h2 id="auditTitle">Audit trail</h2>
+      <ul class="timeline" id="audit"></ul>
+      <div class="actions" style="margin-top:12px">
+        <button type="button" class="btn ghost" id="verifyBtn">Verify chain</button>
+        <button type="button" class="btn ghost" id="tamperBtn">Tamper test</button>
+      </div>
+      <div class="msg" id="chainMsg"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var SAMPLES = {
+    valid: {
+      passport: {
+        nameEn: 'Ahmed Bin Salem Al Mansoori',
+        nameAr: 'أحمد بن سالم المنصوري',
+        dob: '1988-04-12',
+        number: 'P1234567',
+        expiry: '2031-09-30'
+      },
+      emiratesId: {
+        nameEn: 'Ahmed  bin salem al mansoori',
+        nameAr: 'أحمد بن سالم المنصوري',
+        dob: '1988-04-12',
+        number: '784-1988-1234567-1',
+        expiry: '2029-06-15'
+      }
+    },
+    'expired-passport': {
+      passport: {
+        nameEn: 'Fatima Abdullah Al Hammadi',
+        nameAr: 'فاطمة عبدالله الحمادي',
+        dob: '1995-11-02',
+        number: 'P7654321',
+        expiry: '2023-01-20'
+      },
+      emiratesId: {
+        nameEn: 'Fatima Abdullah Al Hammadi',
+        nameAr: 'فاطمة عبدالله الحمادي',
+        dob: '1995-11-02',
+        number: '784-1995-7654321-2',
+        expiry: '2028-03-11'
+      }
+    },
+    'name-mismatch': {
+      passport: {
+        nameEn: 'Mohammed Khalid Al Suwaidi',
+        nameAr: 'محمد خالد السويدي',
+        dob: '1979-07-25',
+        number: 'P2468013',
+        expiry: '2030-12-01'
+      },
+      emiratesId: {
+        nameEn: 'Mohammed K. Al Suwaidy',
+        nameAr: 'محمد خالد السويدي',
+        dob: '1979-07-25',
+        number: '784-1979-2468013-3',
+        expiry: '2027-08-19'
+      }
+    }
+  };
+
+  var T = {
+    en: {
+      sub: 'Trust layer for UAE government documents',
+      banner: 'Synthetic data · illustrative rules',
+      samplesTitle: 'Sample cases',
+      valid: 'Valid case',
+      expired: 'Expired passport',
+      mismatch: 'Name mismatch',
+      docsTitle: 'Documents',
+      passport: 'Passport',
+      eid: 'Emirates ID',
+      rulesTitle: 'Rule checks',
+      gateTitle: 'Human gate',
+      reviewerLabel: 'Reviewer name',
+      reasonLabel: 'Reason / notes',
+      approve: 'Approve',
+      reject: 'Reject',
+      gateNote: 'No auto-approve. Human sign-off required.',
+      auditTitle: 'Audit trail',
+      verify: 'Verify chain',
+      tamper: 'Tamper test',
+      blocked: 'BLOCKED — CRITICAL',
+      cleared: 'No critical failures — awaiting human sign-off',
+      nameEn: 'Name (EN)',
+      nameAr: 'Name (AR)',
+      dob: 'Date of birth',
+      number: 'Number',
+      expiry: 'Expiry',
+      critical: 'CRITICAL',
+      major: 'MAJOR',
+      pass: 'PASS',
+      needReviewer: 'Reviewer name and reason are required.',
+      blockedApproval: 'Approval blocked: critical rules failed.',
+      approvedBy: 'Approved by',
+      rejectedBy: 'Rejected by',
+      chainOk: '✓ Chain intact',
+      chainBad: '✗ Chain broken at entry ',
+      tampered: 'Entry #2 was silently edited. Run "Verify chain" again.',
+      toggle: 'ع'
+    },
+    ar: {
+      sub: 'طبقة الثقة للمستندات الحكومية الإماراتية',
+      banner: 'بيانات اصطناعية · قواعد توضيحية',
+      samplesTitle: 'حالات تجريبية',
+      valid: 'حالة سليمة',
+      expired: 'جواز سفر منتهي',
+      mismatch: 'عدم تطابق الاسم',
+      docsTitle: 'المستندات',
+      passport: 'جواز السفر',
+      eid: 'الهوية الإماراتية',
+      rulesTitle: 'فحص القواعد',
+      gateTitle: 'البوابة البشرية',
+      reviewerLabel: 'اسم المراجع',
+      reasonLabel: 'السبب / ملاحظات',
+      approve: 'موافقة',
+      reject: 'رفض',
+      gateNote: 'لا موافقة تلقائية. التوقيع البشري مطلوب.',
+      auditTitle: 'سجل التدقيق',
+      verify: 'التحقق من السلسلة',
+      tamper: 'اختبار التلاعب',
+      blocked: 'محظور — حرج',
+      cleared: 'لا توجد إخفاقات حرجة — بانتظار التوقيع البشري',
+      nameEn: 'الاسم (إنجليزي)',
+      nameAr: 'الاسم (عربي)',
+      dob: 'تاريخ الميلاد',
+      number: 'الرقم',
+      expiry: 'تاريخ الانتهاء',
+      critical: 'حرج',
+      major: 'مهم',
+      pass: 'ناجح',
+      needReviewer: 'اسم المراجع والسبب مطلوبان.',
+      blockedApproval: 'الموافقة محظورة: فشل في قواعد حرجة.',
+      approvedBy: 'تمت الموافقة بواسطة',
+      rejectedBy: 'تم الرفض بواسطة',
+      chainOk: '✓ السلسلة سليمة',
+      chainBad: '✗ السلسلة مكسورة عند الإدخال ',
+      tampered: 'تم تعديل الإدخال رقم 2 خفيةً. أعد "التحقق من السلسلة".',
+      toggle: 'EN'
+    }
+  };
+
+  var ACTION_LABELS = {
+    CaseCreated: { en: 'Case created', ar: 'إنشاء الحالة' },
+    RulesEvaluated: { en: 'Rules evaluated', ar: 'تقييم القواعد' },
+    ApprovalRequested: { en: 'Approval requested', ar: 'طلب الموافقة' },
+    Approved: { en: 'Approved', ar: 'موافقة' },
+    Rejected: { en: 'Rejected', ar: 'رفض' }
+  };
+
+  var lang = 'en';
+  var current = null;
+  var caseSeq = 0;
+  var decisionAlert = null;
+  var chainAlert = null;
+
+  function $(id) { return document.getElementById(id); }
+  function t(k) { return T[lang][k]; }
+
+  function normalizeName(name) {
+    return String(name).toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function isExpired(dateStr, now) {
+    return new Date(dateStr).getTime() < now.getTime();
+  }
+
+  function evaluateRules(doc, now) {
+    var p = doc.passport;
+    var e = doc.emiratesId;
+    var passportValid = !isExpired(p.expiry, now);
+    var eidValid = !isExpired(e.expiry, now);
+    var nameMatch = normalizeName(p.nameEn) === normalizeName(e.nameEn);
+    var dobMatch = p.dob === e.dob;
+
+    return [
+      {
+        id: 'passport-expiry',
+        severity: 'critical',
+        passed: passportValid,
+        en: passportValid ? 'Passport valid until ' + p.expiry + '.' : 'Passport expired on ' + p.expiry + '.',
+        ar: passportValid
+          ? 'جواز السفر ساري حتى ' + p.expiry + '.'
+          : 'انتهت صلاحية جواز السفر بتاريخ ' + p.expiry + '.'
+      },
+      {
+        id: 'eid-expiry',
+        severity: 'critical',
+        passed: eidValid,
+        en: eidValid ? 'Emirates ID valid until ' + e.expiry + '.' : 'Emirates ID expired on ' + e.expiry + '.',
+        ar: eidValid
+          ? 'الهوية الإماراتية سارية حتى ' + e.expiry + '.'
+          : 'انتهت صلاحية الهوية الإماراتية بتاريخ ' + e.expiry + '.'
+      },
+      {
+        id: 'name-match',
+        severity: 'major',
+        passed: nameMatch,
+        en: nameMatch
+          ? 'Name on passport matches Emirates ID.'
+          : 'Name mismatch: passport "' + p.nameEn + '" vs Emirates ID "' + e.nameEn + '".',
+        ar: nameMatch
+          ? 'الاسم في جواز السفر مطابق للهوية الإماراتية.'
+          : 'عدم تطابق الاسم: جواز السفر "' + p.nameEn + '" مقابل الهوية "' + e.nameEn + '".'
+      },
+      {
+        id: 'dob-match',
+        severity: 'critical',
+        passed: dobMatch,
+        en: dobMatch
+          ? 'Date of birth matches across documents.'
+          : 'Date of birth mismatch: ' + p.dob + ' vs ' + e.dob + '.',
+        ar: dobMatch
+          ? 'تاريخ الميلاد مطابق في المستندين.'
+          : 'عدم تطابق تاريخ الميلاد: ' + p.dob + ' مقابل ' + e.dob + '.'
+      }
+    ];
+  }
+
+  function sha256Hex(text) {
+    var bytes = new TextEncoder().encode(text);
+    return crypto.subtle.digest('SHA-256', bytes).then(function (buf) {
+      var out = '';
+      new Uint8Array(buf).forEach(function (b) {
+        out += b.toString(16).padStart(2, '0');
+      });
+      return out;
+    });
+  }
+
+  function entryHash(prevHash, seq, ts, actor, action) {
+    return sha256Hex(prevHash + seq + ts + actor + action);
+  }
+
+  function appendAudit(c, actor, action, details) {
+    var prevHash = c.audit.length ? c.audit[c.audit.length - 1].hash : '';
+    var seq = c.audit.length + 1;
+    var ts = new Date().toISOString();
+    return entryHash(prevHash, seq, ts, actor, action).then(function (hash) {
+      var entry = {
+        seq: seq,
+        ts: ts,
+        actor: actor,
+        action: action,
+        details: details || '',
+        prevHash: prevHash,
+        hash: hash
+      };
+      c.audit.push(entry);
+      return entry;
+    });
+  }
+
+  function verifyChain(c) {
+    var prevHash = '';
+    var chain = Promise.resolve({ valid: true, brokenAt: null });
+    c.audit.forEach(function (entry) {
+      chain = chain.then(function (state) {
+        if (!state.valid) return state;
+        return entryHash(prevHash, entry.seq, entry.ts, entry.actor, entry.action).then(function (expected) {
+          if (entry.prevHash !== prevHash || entry.hash !== expected) {
+            return { valid: false, brokenAt: entry.seq };
+          }
+          prevHash = entry.hash;
+          return state;
+        });
+      });
+    });
+    return chain;
+  }
+
+  function criticalFailed(c) {
+    return c.rules.some(function (r) { return r.severity === 'critical' && !r.passed; });
+  }
+
+  function createCase(sampleKey) {
+    var sample = SAMPLES[sampleKey];
+    var now = new Date();
+    caseSeq += 1;
+    var c = {
+      id: 'QG-' + String(caseSeq).padStart(4, '0'),
+      sample: sampleKey,
+      createdAt: now.toISOString(),
+      passport: sample.passport,
+      emiratesId: sample.emiratesId,
+      rules: [],
+      decision: null,
+      audit: []
+    };
+    return appendAudit(c, 'system', 'CaseCreated', 'Sample: ' + sampleKey)
+      .then(function () {
+        c.rules = evaluateRules(c, now);
+        var failed = c.rules.filter(function (r) { return !r.passed; }).length;
+        return appendAudit(c, 'system', 'RulesEvaluated', c.rules.length + ' rules, ' + failed + ' failed');
+      })
+      .then(function () { return appendAudit(c, 'system', 'ApprovalRequested', 'Human sign-off required'); })
+      .then(function () { return c; });
+  }
+
+  function fieldRow(key, value) {
+    var row = document.createElement('div');
+    row.className = 'field';
+    var k = document.createElement('span');
+    k.className = 'k';
+    k.textContent = t(key);
+    var v = document.createElement('span');
+    v.className = 'v';
+    v.textContent = value;
+    row.appendChild(k);
+    row.appendChild(v);
+    return row;
+  }
+
+  function renderDoc(el, doc) {
+    el.textContent = '';
+    ['nameEn', 'nameAr', 'dob', 'number', 'expiry'].forEach(function (key) {
+      el.appendChild(fieldRow(key, doc[key]));
+    });
+  }
+
+  function renderAudit(entries) {
+    var list = $('audit');
+    list.textContent = '';
+    entries.forEach(function (e) {
+      var li = document.createElement('li');
+      var seq = document.createElement('span');
+      seq.className = 'seq';
+      seq.textContent = '#' + e.seq;
+      var act = document.createElement('span');
+      var label = ACTION_LABELS[e.action] ? ACTION_LABELS[e.action][lang] : e.action;
+      act.textContent = label + ' · ' + e.actor;
+      var hash = document.createElement('span');
+      hash.className = 'hash';
+      hash.textContent = e.hash.slice(0, 10) + '…';
+      li.appendChild(seq);
+      li.appendChild(act);
+      li.appendChild(hash);
+      list.appendChild(li);
+    });
+  }
+
+  function render(c) {
+    current = c;
+    $('caseView').classList.remove('hidden');
+
+    var verdict = $('verdict');
+    verdict.textContent = '';
+    var box = document.createElement('div');
+    if (criticalFailed(c)) {
+      box.className = 'blocked';
+      box.textContent = t('blocked');
+    } else {
+      box.className = 'cleared';
+      box.textContent = t('cleared');
+    }
+    verdict.appendChild(box);
+
+    renderDoc($('passportFields'), c.passport);
+    renderDoc($('eidFields'), c.emiratesId);
+
+    var rulesEl = $('rules');
+    rulesEl.textContent = '';
+    c.rules.forEach(function (r) {
+      var row = document.createElement('div');
+      row.className = 'rule';
+      var badge = document.createElement('span');
+      if (r.passed) {
+        badge.className = 'badge pass';
+        badge.textContent = t('pass');
+      } else if (r.severity === 'critical') {
+        badge.className = 'badge fail';
+        badge.textContent = t('critical');
+      } else {
+        badge.className = 'badge warn';
+        badge.textContent = t('major');
+      }
+      var text = document.createElement('span');
+      text.textContent = lang === 'ar' ? r.ar : r.en;
+      row.appendChild(badge);
+      row.appendChild(text);
+      rulesEl.appendChild(row);
+    });
+
+    renderAudit(c.audit);
+
+    var decided = !!c.decision;
+    $('approveBtn').disabled = decided;
+    $('rejectBtn').disabled = decided;
+    if (decided) {
+      $('decisionMsg').className = 'msg ' + (c.decision.approved ? 'ok' : 'err');
+      $('decisionMsg').textContent =
+        (c.decision.approved ? t('approvedBy') : t('rejectedBy')) +
+        ' ' + c.decision.reviewer + ' — ' + c.decision.reason;
+    }
+  }
+
+  function renderAlerts() {
+    var dm = $('decisionMsg');
+    if (decisionAlert) {
+      dm.className = 'msg err';
+      dm.textContent = t(decisionAlert);
+    } else if (!current || !current.decision) {
+      dm.textContent = '';
+    }
+    var cm = $('chainMsg');
+    if (!chainAlert) {
+      cm.textContent = '';
+    } else if (chainAlert.kind === 'ok') {
+      cm.className = 'msg ok';
+      cm.textContent = t('chainOk');
+    } else if (chainAlert.kind === 'broken') {
+      cm.className = 'msg err';
+      cm.textContent = t('chainBad') + '#' + chainAlert.seq;
+    } else {
+      cm.className = 'msg err';
+      cm.textContent = t('tampered');
+    }
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    $('appSub').textContent = t('sub');
+    $('banner').textContent = t('banner');
+    $('samplesTitle').textContent = t('samplesTitle');
+    $('btnValid').textContent = t('valid');
+    $('btnExpired').textContent = t('expired');
+    $('btnMismatch').textContent = t('mismatch');
+    $('docsTitle').textContent = t('docsTitle');
+    $('passportTitle').textContent = t('passport');
+    $('eidTitle').textContent = t('eid');
+    $('rulesTitle').textContent = t('rulesTitle');
+    $('gateTitle').textContent = t('gateTitle');
+    $('reviewerLabel').textContent = t('reviewerLabel');
+    $('reasonLabel').textContent = t('reasonLabel');
+    $('approveBtn').textContent = t('approve');
+    $('rejectBtn').textContent = t('reject');
+    $('gateNote').textContent = t('gateNote');
+    $('auditTitle').textContent = t('auditTitle');
+    $('verifyBtn').textContent = t('verify');
+    $('tamperBtn').textContent = t('tamper');
+    $('langToggle').textContent = t('toggle');
+    if (current) render(current);
+    renderAlerts();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.samples button'), function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.samples button'), function (other) {
+        other.classList.toggle('active', other === b);
+      });
+      decisionAlert = null;
+      chainAlert = null;
+      renderAlerts();
+      $('reviewer').value = '';
+      $('reason').value = '';
+      createCase(b.getAttribute('data-sample')).then(render);
+    });
+  });
+
+  $('langToggle').addEventListener('click', function () {
+    lang = lang === 'en' ? 'ar' : 'en';
+    applyLang();
+  });
+
+  function decide(approve) {
+    if (!current || current.decision) return;
+    var reviewer = $('reviewer').value.trim();
+    var reason = $('reason').value.trim();
+    if (!reviewer || !reason) {
+      decisionAlert = 'needReviewer';
+      renderAlerts();
+      return;
+    }
+    if (approve && criticalFailed(current)) {
+      decisionAlert = 'blockedApproval';
+      renderAlerts();
+      return;
+    }
+    var c = current;
+    appendAudit(c, reviewer, approve ? 'Approved' : 'Rejected', reason).then(function () {
+      c.decision = { approved: approve, reviewer: reviewer, reason: reason, at: new Date().toISOString() };
+      decisionAlert = null;
+      render(c);
+    });
+  }
+
+  $('approveBtn').addEventListener('click', function () { decide(true); });
+  $('rejectBtn').addEventListener('click', function () { decide(false); });
+
+  $('verifyBtn').addEventListener('click', function () {
+    if (!current) return;
+    verifyChain(current).then(function (res) {
+      chainAlert = res.valid ? { kind: 'ok' } : { kind: 'broken', seq: res.brokenAt };
+      renderAlerts();
+    });
+  });
+
+  $('tamperBtn').addEventListener('click', function () {
+    if (!current || current.audit.length < 2) return;
+    var entry = current.audit[1];
+    if (entry.action.indexOf('(tampered)') === -1) {
+      entry.action = entry.action + ' (tampered)';
+      entry.details = 'Entry silently edited for demo purposes';
+    }
+    renderAudit(current.audit);
+    chainAlert = { kind: 'tampered' };
+    renderAlerts();
+  });
+
+  applyLang();
+})();
+</script>
+</body>
+</html>
