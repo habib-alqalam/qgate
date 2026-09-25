@@ -294,6 +294,7 @@
       chainOk: '✓ Chain intact',
       chainBad: '✗ Chain broken at entry ',
       tampered: 'Entry #2 was silently edited. Run "Verify chain" again.',
+      tamperedTag: '(tampered)',
       toggle: 'ع'
     },
     ar: {
@@ -333,6 +334,7 @@
       chainOk: '✓ السلسلة سليمة',
       chainBad: '✗ السلسلة مكسورة عند الإدخال ',
       tampered: 'تم تعديل الإدخال رقم 2 خفيةً. أعد "التحقق من السلسلة".',
+      tamperedTag: '(تم التلاعب به)',
       toggle: 'EN'
     }
   };
@@ -524,7 +526,9 @@
       seq.className = 'seq';
       seq.textContent = '#' + e.seq;
       var act = document.createElement('span');
-      var label = ACTION_LABELS[e.action] ? ACTION_LABELS[e.action][lang] : e.action;
+      var key = e.tampered ? e.baseAction : e.action;
+      var label = ACTION_LABELS[key] ? ACTION_LABELS[key][lang] : key;
+      if (e.tampered) label += ' ' + t('tamperedTag');
       act.textContent = label + ' · ' + e.actor;
       var hash = document.createElement('span');
       hash.className = 'hash';
@@ -597,6 +601,7 @@
       dm.className = 'msg err';
       dm.textContent = t(decisionAlert);
     } else if (!current || !current.decision) {
+      dm.className = 'msg';
       dm.textContent = '';
     }
     var cm = $('chainMsg');
@@ -646,6 +651,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('.samples button'), function (other) {
         other.classList.toggle('active', other === b);
       });
+      current = null;
       decisionAlert = null;
       chainAlert = null;
       renderAlerts();
@@ -696,9 +702,11 @@
   $('tamperBtn').addEventListener('click', function () {
     if (!current || current.audit.length < 2) return;
     var entry = current.audit[1];
-    if (entry.action.indexOf('(tampered)') === -1) {
+    if (!entry.tampered) {
+      entry.baseAction = entry.action;
       entry.action = entry.action + ' (tampered)';
       entry.details = 'Entry silently edited for demo purposes';
+      entry.tampered = true;
     }
     renderAudit(current.audit);
     chainAlert = { kind: 'tampered' };
