@@ -24,10 +24,10 @@ Deploy target is the `qalam-gate/public` directory as a static site.
 | --- | --- |
 | `passport-expiry` | critical |
 | `eid-expiry` | critical |
-| `name-match` (case/space-insensitive) | major |
+| `name-match` (case/space-insensitive) | critical |
 | `dob-match` | critical |
 
-Approve is refused while any critical rule has failed. There is no auto-approve path: reviewer name and reason are always required.
+Approve is disabled and refused while any critical rule has failed. There is no auto-approve path: reviewer name and reason are always required.
 
 ## Audit chain
 

@@ -394,7 +394,7 @@
       },
       {
         id: 'name-match',
-        severity: 'major',
+        severity: 'critical',
         passed: nameMatch,
         en: nameMatch
           ? 'Name on passport matches Emirates ID.'
@@ -586,7 +586,7 @@
     renderAudit(c.audit);
 
     var decided = !!c.decision;
-    $('approveBtn').disabled = decided;
+    $('approveBtn').disabled = decided || criticalFailed(c);
     $('rejectBtn').disabled = decided;
     if (decided) {
       $('decisionMsg').className = 'msg ' + (c.decision.approved ? 'ok' : 'err');
