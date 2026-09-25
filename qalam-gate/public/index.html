@@ -362,7 +362,7 @@
   }
 
   function isExpired(dateStr, now) {
-    return new Date(dateStr + 'T23:59:59.999Z').getTime() < now.getTime();
+    return new Date(dateStr + 'T23:59:59.999+04:00').getTime() < now.getTime();
   }
 
   function evaluateRules(doc, now) {
@@ -692,6 +692,7 @@
     appendAudit(c, reviewer, approve ? 'Approved' : 'Rejected', reason).then(function () {
       c.decision = { approved: approve, reviewer: reviewer, reason: reason, at: new Date().toISOString() };
       c.deciding = false;
+      if (current !== c) return;
       decisionAlert = null;
       render(c);
     }, function () {
