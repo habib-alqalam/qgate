@@ -24,17 +24,17 @@ Deploy target is the `qalam-gate/public` directory as a static site.
 | --- | --- |
 | `passport-expiry` | critical |
 | `eid-expiry` | critical |
-| `name-match` (case/space-insensitive) | major |
+| `name-match` (case/space-insensitive) | critical |
 | `dob-match` | critical |
 
-Approve is refused while any critical rule has failed. There is no auto-approve path: reviewer name and reason are always required.
+Approve is disabled and refused while any critical rule has failed. There is no auto-approve path: reviewer name and reason are always required.
 
 ## Audit chain
 
 Every case carries an append-only log — `CaseCreated`, `RulesEvaluated`, `ApprovalRequested`, then `Approved` or `Rejected`. Each entry is chained:
 
 ```
-hash = sha256(prevHash + seq + ts + actor + action)
+hash = sha256([prevHash, seq, ts, actor, action, details].join('|'))
 ```
 
 "Verify chain" recomputes every hash. "Tamper test" silently edits entry #2, after which verification reports the chain broken at that entry.
