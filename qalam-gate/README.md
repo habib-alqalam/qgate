@@ -34,7 +34,7 @@ Approve is refused while any critical rule has failed. There is no auto-approve 
 Every case carries an append-only log — `CaseCreated`, `RulesEvaluated`, `ApprovalRequested`, then `Approved` or `Rejected`. Each entry is chained:
 
 ```
-hash = sha256(prevHash + seq + ts + actor + action)
+hash = sha256([prevHash, seq, ts, actor, action, details].join('|'))
 ```
 
 "Verify chain" recomputes every hash. "Tamper test" silently edits entry #2, after which verification reports the chain broken at that entry.

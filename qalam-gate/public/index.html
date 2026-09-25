@@ -428,15 +428,15 @@
     });
   }
 
-  function entryHash(prevHash, seq, ts, actor, action) {
-    return sha256Hex(prevHash + seq + ts + actor + action);
+  function entryHash(prevHash, seq, ts, actor, action, details) {
+    return sha256Hex([prevHash, seq, ts, actor, action, details || ''].join('|'));
   }
 
   function appendAudit(c, actor, action, details) {
     var prevHash = c.audit.length ? c.audit[c.audit.length - 1].hash : '';
     var seq = c.audit.length + 1;
     var ts = new Date().toISOString();
-    return entryHash(prevHash, seq, ts, actor, action).then(function (hash) {
+    return entryHash(prevHash, seq, ts, actor, action, details).then(function (hash) {
       var entry = {
         seq: seq,
         ts: ts,
@@ -457,7 +457,7 @@
     c.audit.forEach(function (entry) {
       chain = chain.then(function (state) {
         if (!state.valid) return state;
-        return entryHash(prevHash, entry.seq, entry.ts, entry.actor, entry.action).then(function (expected) {
+        return entryHash(prevHash, entry.seq, entry.ts, entry.actor, entry.action, entry.details).then(function (expected) {
           if (entry.prevHash !== prevHash || entry.hash !== expected) {
             return { valid: false, brokenAt: entry.seq };
           }
