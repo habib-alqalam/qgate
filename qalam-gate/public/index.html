@@ -352,6 +352,7 @@
   var caseSeq = 0;
   var decisionAlert = null;
   var chainAlert = null;
+  var selectionToken = 0;
 
   function $(id) { return document.getElementById(id); }
   function t(k) { return T[lang][k]; }
@@ -361,7 +362,7 @@
   }
 
   function isExpired(dateStr, now) {
-    return new Date(dateStr).getTime() < now.getTime();
+    return new Date(dateStr + 'T23:59:59.999Z').getTime() < now.getTime();
   }
 
   function evaluateRules(doc, now) {
@@ -657,7 +658,11 @@
       renderAlerts();
       $('reviewer').value = '';
       $('reason').value = '';
-      createCase(b.getAttribute('data-sample')).then(render);
+      var token = ++selectionToken;
+      createCase(b.getAttribute('data-sample')).then(function (c) {
+        if (token !== selectionToken) return;
+        render(c);
+      });
     });
   });
 
@@ -667,7 +672,7 @@
   });
 
   function decide(approve) {
-    if (!current || current.decision) return;
+    if (!current || current.decision || current.deciding) return;
     var reviewer = $('reviewer').value.trim();
     var reason = $('reason').value.trim();
     if (!reviewer || !reason) {
@@ -675,16 +680,22 @@
       renderAlerts();
       return;
     }
-    if (approve && criticalFailed(current)) {
+    var c = current;
+    c.rules = evaluateRules(c, new Date());
+    if (approve && criticalFailed(c)) {
       decisionAlert = 'blockedApproval';
+      render(c);
       renderAlerts();
       return;
     }
-    var c = current;
+    c.deciding = true;
     appendAudit(c, reviewer, approve ? 'Approved' : 'Rejected', reason).then(function () {
       c.decision = { approved: approve, reviewer: reviewer, reason: reason, at: new Date().toISOString() };
+      c.deciding = false;
       decisionAlert = null;
       render(c);
+    }, function () {
+      c.deciding = false;
     });
   }
 
